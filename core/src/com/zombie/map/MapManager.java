@@ -2,6 +2,7 @@ package com.zombie.map;
 
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.zombie.entities.GameUnit;
 import com.zombie.game.TextureManager;
@@ -14,11 +15,12 @@ public class MapManager {
 
     public static final int TILE_WIDTH = 64;
     public static final int TILE_HEIGHT = 32;
-    public static Tile SELECTED_TILE;
-    public static Tile HIGHLIGHTED_TILE;
+    public static Tile SELECTED_TILE = null;
+    public static Tile HIGHLIGHTED_TILE = null;
     public static Tile END_TILE;
+    public static GameUnit SELECTED_UNIT;
     public static GameMap gameMap;
-    final static short MAP_LENGTH = 30;
+    final static short MAP_LENGTH = 40;
     final static short MAP_WIDTH = 30;
 
     Texture selectedTileTexture;
@@ -27,8 +29,10 @@ public class MapManager {
     public static ArrayList<Tile> path;
     Tile[][] tiles;
     OrthographicCamera camera;
+    private BitmapFont font;
 
     public MapManager(OrthographicCamera camera) {
+        font = new BitmapFont();
         gameMap = new GameMap(MAP_WIDTH, MAP_LENGTH);
         this.camera = camera;
         this.loadTextures();
@@ -42,8 +46,9 @@ public class MapManager {
         // LOAD ALL TEXTURES
         ArrayList<String> textures = new ArrayList<>();
         textures.addAll(Arrays.stream(TextureManager.UI_TILES.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
-        textures.addAll(Arrays.stream(TextureManager.TILES.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
+        textures.addAll(Arrays.stream(TextureManager.TILE_OBJECTS.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
         textures.addAll(Arrays.stream(TextureManager.UNITS.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
+        textures.addAll(Arrays.stream(TextureManager.TILES.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
         TextureManager.addAssets(textures);
         // ASSIGN UI TEXTURES
         this.highlightedTileTexture = TextureManager.getAsset(TextureManager.UI_TILES.highlightTile.texture.getName());
@@ -56,9 +61,8 @@ public class MapManager {
     }
 
     public static void createPath() {
-        long startTime = System.nanoTime();
         path = pathFinder.findPath(SELECTED_TILE, END_TILE);
-        long endTime = System.nanoTime();
+
     }
 
     public static void clearExplored() {
@@ -76,39 +80,51 @@ public class MapManager {
         for (int x = 0; x < MAP_WIDTH; x++) {
             for (int y = 0; y < MAP_LENGTH; y++) {
                 Tile tile = tiles[x][y];
-                int screenX = ((x - y) * (TILE_WIDTH / 2));
-                int screenY = -((y + x) * (TILE_HEIGHT / 2));
-                tile.render(batch, screenX, screenY - 32);
+
+                tile.render(batch, tile.screenX, tile.screenY - TILE_HEIGHT);
+
+                for (TextureManager.TILE_OBJECTS object : tile.objectsOnTile) {
+                    if (object.texture != null) {
+                        batch.draw(TextureManager.getAsset(object.texture.getName()), tile.screenX, tile.screenY, object.texture.getWidth(), object.texture.getHeight());
+                    }
+                }
 
                 if (path != null && path.contains(tile)) {
-                    batch.draw(this.highlightedTileTexture, screenX, screenY, TILE_WIDTH, TILE_HEIGHT);
+                    batch.draw(this.highlightedTileTexture, tile.screenX, tile.screenY, TILE_WIDTH, TILE_HEIGHT);
                 }
 
                 if (tile.hasUnit()) {
-                    drawUnit(batch, tile.getUnitOnTile(), screenX, screenY);
+                    GameUnit unit = tile.getUnitOnTile();
+                    unit.render(batch);
                 }
 
                 if (tile == HIGHLIGHTED_TILE) {
-                    highlightedX = screenX;
-                    highlightedY = screenY;
+                    highlightedX = tile.screenX;
+                    highlightedY = tile.screenY;
                 }
 
                 if (tile == SELECTED_TILE) {
-                    selectedX = screenX;
-                    selectedY = screenY;
+                    selectedX = tile.screenX;
+                    selectedY = tile.screenY;
                 }
             }
         }
 
+        if (END_TILE != null && path != null) {
+            if (path.get(0).getPathCost() != null)
+                font.draw(batch, path.get(0).getPathCost().toString(), END_TILE.screenX + 32, END_TILE.screenY + 32);
+        }
+
         renderOverTile(batch, this.highlightedTileTexture, highlightedX, highlightedY);
-        renderOverTile(batch, this.selectedTileTexture, selectedX, selectedY);
+
+        if (SELECTED_TILE != null) {
+            renderOverTile(batch, this.selectedTileTexture, selectedX, selectedY);
+        }
+
     }
 
     public void renderOverTile(SpriteBatch batch, Texture texture, int x, int y) {
         batch.draw(texture, x, y, TILE_WIDTH, TILE_HEIGHT);
     }
 
-    public void drawUnit(SpriteBatch batch, GameUnit unit, int x, int y) {
-        batch.draw(TextureManager.getAsset(unit.getTextureFileName()), x, y, unit.getWidth(), unit.getHeight());
-    }
 }

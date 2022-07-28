@@ -14,9 +14,13 @@ public class Tile {
     public final ArrayList<Tile> neighbours;
     public final int x;
     public final int y;
+
+    public final int screenX;
+    public final int screenY;
     public final int h;
     public boolean explored = false;
     public boolean isVisible;
+    public TextureManager.TEXTURE baseTile;
 
     String textureFileName;
 
@@ -30,23 +34,28 @@ public class Tile {
     }
 
     private boolean hasUnit;
-    private int timeUnitCost;
+    private int movementCost;
+    private Integer pathCost;
 
     public GameUnit getUnitOnTile() {
         return unitOnTile;
     }
 
     GameUnit unitOnTile;
-    ArrayList<Object> objectsOnTile;
+    ArrayList<TextureManager.TILE_OBJECTS> objectsOnTile;
 
     public Tile(int x, int y, int h) {
+        this.objectsOnTile = new ArrayList<>();
         this.isVisible = false;
         this.neighbours = new ArrayList<>();
         this.walkable = true;
         this.x = x;
         this.y = y;
         this.h = h;
-        calculateTimeUnitCost();
+        this.width = MapManager.TILE_WIDTH;
+        this.height = MapManager.TILE_HEIGHT;
+        this.screenX = ((x - y) * (width / 2));
+        this.screenY = -((y + x) * (height / 2));
     }
 
     public void setVisible(boolean isVisible) {
@@ -67,20 +76,20 @@ public class Tile {
         batch.draw(TextureManager.getAsset(textureFileName), screenX, screenY, this.width, this.height);
     }
 
-    public void calculateTimeUnitCost() {
-        this.timeUnitCost = 0;
+    public void setBaseTile(TextureManager.TEXTURE texture) {
+        this.baseTile = texture;
+        this.width = texture.getWidth();
+        this.height = texture.getHeight();
+        this.textureFileName = texture.getName();
     }
 
-    public void setTexture(TextureManager.TILES tile) {
-        this.width = tile.texture.getWidth();
-        this.height = tile.texture.getHeight();
-        this.textureFileName = tile.texture.getName();
-        this.timeUnitCost = tile.cost;
-        this.walkable = tile.walkable;
+
+    private void setTextureData(TextureManager.TEXTURE texture) {
+
     }
 
-    public int getTimeUnitCost() {
-        return timeUnitCost;
+    public int getMovementCost() {
+        return movementCost;
     }
 
     public int getX() {
@@ -95,16 +104,16 @@ public class Tile {
         return walkable;
     }
 
-    public void setWalkable(boolean walkable) {
-        this.walkable = walkable;
-    }
-
     public Object getObjectsOnTile() {
         return objectsOnTile;
     }
 
-    public void addObjectOnTile(Object o) {
-        this.objectsOnTile.add(o);
+    public void addObjectOnTile(TextureManager.TILE_OBJECTS object) {
+        if (object.texture != null) {
+            this.objectsOnTile.add(object);
+            this.walkable = object.walkable;
+            this.movementCost += object.movementCost;
+        }
     }
 
     public void addUnit(GameUnit unit) {
@@ -119,5 +128,13 @@ public class Tile {
 
     public ArrayList<Tile> getNeighbors(Tile currentTile) {
         return neighbours;
+    }
+
+    public Integer getPathCost() {
+        return pathCost;
+    }
+
+    public void setPathCost(int pathCost) {
+        this.pathCost = pathCost;
     }
 }

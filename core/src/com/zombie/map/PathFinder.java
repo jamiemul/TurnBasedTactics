@@ -3,6 +3,7 @@ package com.zombie.map;
 import com.zombie.map.Tile;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class PathFinder {
     final ArrayList<Tile> tileMap;
@@ -28,7 +29,7 @@ public class PathFinder {
             ArrayList<Tile> neighbours = currentTile.getNeighbors(currentTile);
             for (Tile neighbour : neighbours) {
                 if (!explored.contains(neighbour) && neighbour.isWalkable() && !neighbour.hasUnit()) {
-                    int gScore = currentTile.gScore + getDistance(neighbour, currentTile) + neighbour.getTimeUnitCost();
+                    int gScore = currentTile.gScore + getDistance(neighbour, currentTile) + neighbour.getMovementCost();
                     if (!openList.contains(neighbour)) {
                         openList.add(neighbour);
                         neighbour.hScore = getDistance(neighbour, end);
@@ -63,8 +64,7 @@ public class PathFinder {
     }
 
     public ArrayList<Tile> reConstructPath(Tile start, Tile end, int mapSize) {
-
-        ArrayList<Tile> path = new ArrayList<>();
+        ArrayList<Tile> reversePath = new ArrayList<>();
         Tile currentNode = end;
 
         while (currentNode != start) {
@@ -72,14 +72,33 @@ public class PathFinder {
                 return null;
             }
 
-            if (path.size() > mapSize) {
+            if (reversePath.size() > mapSize) {
                 return null;
             }
 
-            path.add(currentNode);
+            reversePath.add(currentNode);
             currentNode = currentNode.parent;
         }
 
+        Collections.reverse(reversePath);
+        ArrayList<Tile> path = new ArrayList<>();
+        int cost = 0;
+        Tile previousTile = null;
+        for (Tile tile : reversePath) {
+            if (previousTile != null) {
+                cost += (getDistance(previousTile, tile)) + 1;
+            }
+            cost += tile.getMovementCost();
+            previousTile = tile;
+
+            if (cost < start.getUnitOnTile().getTimeUnits()) {
+                path.add(tile);
+            } else {
+                break;
+            }
+
+        }
+        path.get(0).setPathCost(cost);
         return path;
     }
 

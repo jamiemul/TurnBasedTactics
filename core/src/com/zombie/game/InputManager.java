@@ -5,6 +5,8 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector3;
+import com.zombie.entities.GameUnit;
+import com.zombie.entities.PlayerCharacter;
 import com.zombie.map.GameMap;
 import com.zombie.map.MapManager;
 import com.zombie.map.Tile;
@@ -19,9 +21,14 @@ public class InputManager implements InputProcessor {
     boolean leftButtonPressed;
     boolean rightButtonPressed;
     public static INPUT_STATE inputState = INPUT_STATE.map_mode;
+    public static SELECT_STATE selectState = SELECT_STATE.pathNotSelected;
 
     public enum INPUT_STATE {
-        menu, inventory, map_mode;
+        menu, inventory, map_mode, map_animation;
+    }
+
+    public enum SELECT_STATE {
+        pathNotSelected, pathSelected;
     }
 
     public InputManager(OrthographicCamera camera) {
@@ -60,6 +67,10 @@ public class InputManager implements InputProcessor {
             camera.translate(0, -keyAmount, 0);
         }
 
+        if (input.isKeyPressed(Input.Keys.SPACE)) {
+            //END TURN
+        }
+
         this.selectTile();
     }
 
@@ -80,31 +91,44 @@ public class InputManager implements InputProcessor {
             if (tileX >= 0 && tileY >= 0 && tileX < GameMap.getWidth() && tileY < GameMap.getLength()) {
                 if (tile.getX() == tileX && tile.getY() == tileY) {
 
-                    if (leftButtonPressed && MapManager.SELECTED_TILE != tile && tile.isWalkable()) {
+                    if (leftButtonPressed && tile.hasUnit()) {
                         if (MapManager.SELECTED_TILE != tile) {
                             MapManager.SELECTED_TILE = tile;
+                            MapManager.SELECTED_UNIT = tile.getUnitOnTile();
                         } else {
-                            MapManager.SELECTED_TILE = null;
+                            resetPath();
                         }
+                    }
 
-                        if (MapManager.path != null) {
-                            MapManager.path.clear();
-                            MapManager.clearExplored();
-                        }
-
+                    if (leftButtonPressed && selectState == SELECT_STATE.pathNotSelected && MapManager.END_TILE != null) {
+                        selectState = SELECT_STATE.pathSelected;
+                    } else if (leftButtonPressed && selectState == SELECT_STATE.pathSelected) {
+                        selectState = SELECT_STATE.pathNotSelected;
                         MapManager.END_TILE = null;
                     }
 
-                    if (rightButtonPressed && MapManager.SELECTED_TILE != null && MapManager.SELECTED_TILE != tile && tile.isWalkable()) {
-                        MapManager.END_TILE = tile;
-                        MapManager.clearExplored();
-                        MapManager.createPath();
+                    if (MapManager.SELECTED_TILE != tile && MapManager.SELECTED_TILE != null && !tile.hasUnit() && selectState == SELECT_STATE.pathNotSelected) {
+                        GameUnit unit = MapManager.SELECTED_TILE.getUnitOnTile();
+                        if (unit.getClass() == PlayerCharacter.class) {
+                            MapManager.END_TILE = tile;
+                            MapManager.clearExplored();
+                            MapManager.createPath();
+                        }
                     }
-
-                    MapManager.HIGHLIGHTED_TILE = tile;
                 }
             }
         }
+    }
+
+    private void resetPath() {
+        MapManager.SELECTED_TILE = null;
+        MapManager.SELECTED_UNIT = null;
+        MapManager.END_TILE = null;
+        if (MapManager.path != null) {
+            MapManager.path.clear();
+            MapManager.clearExplored();
+        }
+        selectState = SELECT_STATE.pathNotSelected;
     }
 
     public void zoomCamera(float zoom) {
