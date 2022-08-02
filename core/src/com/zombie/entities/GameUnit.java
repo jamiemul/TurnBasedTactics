@@ -1,95 +1,164 @@
 package com.zombie.entities;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.zombie.game.TextureManager;
+import com.badlogic.gdx.math.Vector2;
+import com.zombie.game.InputManager;
+import com.zombie.gfx.TextureManager;
 import com.zombie.map.MapManager;
-import com.zombie.map.Tile;
+import com.zombie.utils.UnitAttributes;
 
 import java.util.ArrayList;
 
 public class GameUnit {
-
-    private Tile tile;
+    public int sightDistance;
+    private UnitAttributes unitAttributes;
+    private Tile currentTile;
+    private String name;
+    private Tile goalTile;
+    private int pathWalked;
+    private boolean unitMoving;
+    private ArrayList<Tile> path;
     private String textureFileName;
-    private int timeUnits;
-    private int width;
-    private int height;
-    boolean visible;
-    private int x;
-    private int y;
+    private int availableTimeUnits;
+    private int textureWidth;
+    private int textureHeight;
+    private Vector2 direction;
+    private int heightOffset;
+    boolean visible = false;
+    private float screenX;
+    private float screenY;
 
     public GameUnit() {
-        visible = false;
-        timeUnits = 0;
+        setAttributes();
     }
 
     public GameUnit(TextureManager.TEXTURE texture) {
-        visible = false;
-        timeUnits = 0;
+        setAttributes();
         setTexture(texture);
     }
 
     public GameUnit(TextureManager.TEXTURE texture, Tile tile) {
-        visible = false;
-        timeUnits = 0;
+        setAttributes();
         setTexture(texture);
-        setPos(tile);
+        updateTileAndSetPosition(tile);
     }
 
-    public void setPos(Tile tile) {
+    private void setAttributes() {
+        visible = false;
+        unitAttributes = new UnitAttributes();
+        availableTimeUnits = unitAttributes.getTimeUnits();
+    }
 
-        if (this.tile != null) {
-            this.tile.removeUnit();
+    public void updateTileAndSetPosition(Tile tile) {
+        this.updateTile(tile);
+        this.setPosition(currentTile);
+    }
+
+    public void updateTile(Tile tile) {
+        if (this.currentTile != null) {
+            this.currentTile.removeUnit();
         }
+        this.currentTile = tile;
+        this.currentTile.addUnit(this);
+    }
 
-        int width = MapManager.TILE_WIDTH;
-        int height = MapManager.TILE_HEIGHT;
-        this.x = ((tile.getX() - tile.getY()) * (width / 2)) + height / 2;
-        this.y = -((tile.getY() + tile.getX()) * (height / 2)) + height / 2;
-        this.tile = tile;
-        this.tile.addUnit(this);
+    public void setPosition(Tile tile) {
+        this.screenX = ((tile.getX() - tile.getY()) * (MapManager.TILE_WIDTH / 2));
+        this.screenY = -((tile.getY() + tile.getX()) * (MapManager.TILE_HEIGHT / 2));
     }
 
     public void setTexture(TextureManager.TEXTURE texture) {
-        this.width = texture.getWidth();
-        this.height = texture.getHeight();
+        this.textureWidth = texture.getWidth();
+        this.textureHeight = texture.getHeight();
+        this.heightOffset = MapManager.TILE_HEIGHT / 2;
         this.textureFileName = texture.getName();
-
     }
 
-    public void moveTo(ArrayList<Tile> path) {
-        this.setPos(path.get(path.size() - 1));
+    public void update() {
+        if (unitMoving) {
+            float x = goalTile.getScreenX() - this.screenX;
+            float y = goalTile.getScreenY() - this.screenY;
+            direction = new Vector2(x, y).nor();
+            Vector2 v1 = new Vector2(this.screenX, this.screenY);
+            Vector2 v2 = new Vector2(goalTile.getScreenX(), goalTile.getScreenY());
+            double distance = v1.dst(v2);
+            this.screenX += direction.x;
+            this.screenY += direction.y;
+
+            if (distance < MapManager.TILE_WIDTH / 2) {
+                this.updateTile(goalTile);
+            }
+
+
+            if (path.size() > 0 && distance < 2) {
+                if (goalTile == path.get(path.size() - 1)) { //GOAL REACHED
+                    this.updateTileAndSetPosition(goalTile);
+                    pathWalked = 0;
+                    availableTimeUnits -= path.get(0).getPathCost();
+                    path.clear();
+                    InputManager.inputState = InputManager.INPUT_STATE.map_mode;
+                    unitMoving = false;
+                } else {
+                    pathWalked += 1;
+                    this.updateTileAndSetPosition(goalTile);
+                    goalTile = path.get(pathWalked);
+                }
+            }
+
+        }
     }
 
-    public Tile getPos() {
-        return tile;
-    }
-
-    public String getTextureFileName() {
-        return textureFileName;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public int getTimeUnits() {
-        return timeUnits;
-    }
-
-    public int getX() {
-        return this.x;
-    }
-
-    public int getY() {
-        return this.y;
-    }
 
     public void render(SpriteBatch batch) {
-        batch.draw(TextureManager.getAsset(textureFileName), x, y, width, height);
+        batch.draw(TextureManager.getAsset(textureFileName), screenX, screenY + heightOffset, textureWidth, textureHeight);
     }
+
+    public void move() {
+        this.goalTile = path.get(0);
+        this.unitMoving = true;
+    }
+
+    public void setPath(ArrayList<Tile> path) {
+        this.path = new ArrayList<>(path.size());
+        for (Tile tile : path) {
+            this.path.add(tile);
+        }
+    }
+
+    public Tile getCurrentTile() {
+        return currentTile;
+    }
+
+    public int getAvailableTimeUnits() {
+        return availableTimeUnits;
+    }
+
+    public void refreshAvailableTimeUnits() {
+        availableTimeUnits = unitAttributes.getTimeUnits();
+    }
+
+    public boolean isVisible() {
+        return visible;
+    }
+
+    public void setVisible(boolean visible) {
+        this.visible = visible;
+    }
+
+    public UnitAttributes getAttributes() {
+        return unitAttributes;
+    }
+
+    public void setAttributes(UnitAttributes unitAttributes) {
+        this.unitAttributes = unitAttributes;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
 }

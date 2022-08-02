@@ -1,11 +1,12 @@
 package com.zombie.map;
 
-import com.zombie.map.Tile;
+import com.zombie.entities.Tile;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
 public class PathFinder {
+    final int BASE_WALK_COST = 4;
     final ArrayList<Tile> tileMap;
 
     public PathFinder(ArrayList<Tile> tileMap) {
@@ -13,7 +14,7 @@ public class PathFinder {
     }
 
     public int getDistance(Tile start, Tile end) {
-        return Math.abs(start.y - end.y) + Math.abs(start.x - end.x);
+        return Math.abs(start.getY() - end.getY()) + Math.abs(start.getX() - end.getX());
     }
 
     public ArrayList<Tile> findPath(Tile start, Tile end) {
@@ -39,7 +40,6 @@ public class PathFinder {
                         neighbour.gScore = gScore;
                         neighbour.parent = currentTile;
                     }
-
                     neighbour.fScore = neighbour.gScore + neighbour.hScore;
                 }
             }
@@ -82,23 +82,30 @@ public class PathFinder {
 
         Collections.reverse(reversePath);
         ArrayList<Tile> path = new ArrayList<>();
+        int availableTimeUnits = start.getUnitOnTile().getAvailableTimeUnits();
         int cost = 0;
-        Tile previousTile = null;
+        Tile previousTile = start;
         for (Tile tile : reversePath) {
-            if (previousTile != null) {
-                cost += (getDistance(previousTile, tile)) + 1;
+            int distance = getDistance(previousTile, tile);
+            int movementCost = BASE_WALK_COST + tile.getMovementCost();
+            if (distance > 1) {
+                movementCost *= 1.5;
             }
-            cost += tile.getMovementCost();
-            previousTile = tile;
 
-            if (cost < start.getUnitOnTile().getTimeUnits()) {
+            if (cost + movementCost <= availableTimeUnits) {
+                cost += movementCost;
                 path.add(tile);
             } else {
                 break;
             }
 
+            previousTile = tile;
         }
-        path.get(0).setPathCost(cost);
+
+        if (path != null && path.size() > 0) {
+            path.get(0).setPathCost(cost);
+        }
+
         return path;
     }
 

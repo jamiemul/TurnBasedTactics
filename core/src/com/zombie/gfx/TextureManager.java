@@ -1,8 +1,9 @@
-package com.zombie.game;
+package com.zombie.gfx;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -37,7 +38,7 @@ public class TextureManager extends AssetManager {
                 width = img.getWidth();
                 height = img.getHeight();
             } catch (IOException e) {
-
+                System.out.println(e);
             }
         }
 
@@ -56,6 +57,7 @@ public class TextureManager extends AssetManager {
         public int getWidth() {
             return width;
         }
+
     }
 
     public enum UI_TILES {
@@ -98,6 +100,10 @@ public class TextureManager extends AssetManager {
             this.weighting = weighting;
         }
 
+        public void render(SpriteBatch batch, int screenX, int screenY) {
+            batch.draw(TextureManager.getAsset(this.texture.textureName), screenX, screenY, this.texture.width, this.texture.width);
+        }
+
     }
 
     public enum TILES {
@@ -131,7 +137,6 @@ public class TextureManager extends AssetManager {
     public static void addAssets(ArrayList<String> values) {
         for (String asset : values) {
             textureMapsList.put(asset, new Texture(Gdx.files.internal(asset)));
-
         }
     }
 

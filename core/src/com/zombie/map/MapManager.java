@@ -5,7 +5,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.zombie.entities.GameUnit;
-import com.zombie.game.TextureManager;
+import com.zombie.entities.Tile;
+import com.zombie.gfx.TextureManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +31,7 @@ public class MapManager {
     Tile[][] tiles;
     OrthographicCamera camera;
     private BitmapFont font;
+    private UnitManager unitManager;
 
     public MapManager(OrthographicCamera camera) {
         font = new BitmapFont();
@@ -40,6 +42,8 @@ public class MapManager {
         this.tiles = gameMap.getTiles2D();
         pathFinder = new PathFinder(gameMap.getTiles());
         path = new ArrayList<>();
+        unitManager = new UnitManager(this.tiles, pathFinder);
+        unitManager.addUnits();
     }
 
     public void loadTextures() {
@@ -62,7 +66,6 @@ public class MapManager {
 
     public static void createPath() {
         path = pathFinder.findPath(SELECTED_TILE, END_TILE);
-
     }
 
     public static void clearExplored() {
@@ -71,59 +74,54 @@ public class MapManager {
         }
     }
 
-    public void renderMap(SpriteBatch batch) {
-        int selectedX = 0;
-        int selectedY = 0;
-        int highlightedX = 0;
-        int highlightedY = 0;
+    public void update(SpriteBatch batch) {
+        unitManager.update();
 
-        for (int x = 0; x < MAP_WIDTH; x++) {
-            for (int y = 0; y < MAP_LENGTH; y++) {
+        for (int y = 0; y < MAP_LENGTH; y++) {
+            for (int x = 0; x < MAP_WIDTH; x++) {
                 Tile tile = tiles[x][y];
 
-                tile.render(batch, tile.screenX, tile.screenY - TILE_HEIGHT);
-
-                for (TextureManager.TILE_OBJECTS object : tile.objectsOnTile) {
-                    if (object.texture != null) {
-                        batch.draw(TextureManager.getAsset(object.texture.getName()), tile.screenX, tile.screenY, object.texture.getWidth(), object.texture.getHeight());
-                    }
-                }
+                tile.render(batch, tile.getScreenX(), tile.getScreenY() - TILE_HEIGHT);
 
                 if (path != null && path.contains(tile)) {
-                    batch.draw(this.highlightedTileTexture, tile.screenX, tile.screenY, TILE_WIDTH, TILE_HEIGHT);
+                    batch.draw(this.highlightedTileTexture, tile.getScreenX(), tile.getScreenY(), TILE_WIDTH, TILE_HEIGHT);
+                }
+            }
+        }
+
+        if (HIGHLIGHTED_TILE != null) {
+            renderHighlightTile(batch, this.highlightedTileTexture, HIGHLIGHTED_TILE.getScreenX(), HIGHLIGHTED_TILE.getScreenY());
+        }
+
+        if (SELECTED_TILE != null) {
+            renderHighlightTile(batch, this.selectedTileTexture, SELECTED_TILE.getScreenX(), SELECTED_TILE.getScreenY());
+        }
+
+        for (int y = 0; y < MAP_LENGTH; y++) {
+            for (int x = 0; x < MAP_WIDTH; x++) {
+                Tile tile = tiles[x][y];
+
+                for (TextureManager.TILE_OBJECTS object : tile.getObjectsOnTile()) {
+                    if (object.texture != null) {
+                        object.render(batch, tile.getScreenX(), tile.getScreenY());
+                    }
                 }
 
                 if (tile.hasUnit()) {
                     GameUnit unit = tile.getUnitOnTile();
                     unit.render(batch);
                 }
-
-                if (tile == HIGHLIGHTED_TILE) {
-                    highlightedX = tile.screenX;
-                    highlightedY = tile.screenY;
-                }
-
-                if (tile == SELECTED_TILE) {
-                    selectedX = tile.screenX;
-                    selectedY = tile.screenY;
-                }
             }
         }
 
-        if (END_TILE != null && path != null) {
+        if (END_TILE != null && path != null && path.size() > 0) {
             if (path.get(0).getPathCost() != null)
-                font.draw(batch, path.get(0).getPathCost().toString(), END_TILE.screenX + 32, END_TILE.screenY + 32);
+                font.draw(batch, path.get(0).getPathCost().toString(), END_TILE.getScreenX() + 24, END_TILE.getScreenY() + 24);
+            renderHighlightTile(batch, this.selectedTileTexture, END_TILE.getScreenX(), END_TILE.getScreenY());
         }
-
-        renderOverTile(batch, this.highlightedTileTexture, highlightedX, highlightedY);
-
-        if (SELECTED_TILE != null) {
-            renderOverTile(batch, this.selectedTileTexture, selectedX, selectedY);
-        }
-
     }
 
-    public void renderOverTile(SpriteBatch batch, Texture texture, int x, int y) {
+    public void renderHighlightTile(SpriteBatch batch, Texture texture, int x, int y) {
         batch.draw(texture, x, y, TILE_WIDTH, TILE_HEIGHT);
     }
 

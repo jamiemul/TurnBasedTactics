@@ -13,6 +13,7 @@ public class Game extends ApplicationAdapter {
     MapManager renderer;
     public static final int WIDTH = 320 * 4;
     public static final int HEIGHT = 180 * 4;
+
     InputManager input;
 
     @Override
@@ -31,7 +32,7 @@ public class Game extends ApplicationAdapter {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         input.update();
-        renderer.renderMap(batch);
+        renderer.update(batch);
         batch.end();
     }
 

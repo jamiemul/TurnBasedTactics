@@ -1,8 +1,7 @@
 package com.zombie.map;
 
-import com.zombie.entities.GameUnit;
-import com.zombie.entities.PlayerCharacter;
-import com.zombie.game.TextureManager;
+import com.zombie.entities.Tile;
+import com.zombie.gfx.TextureManager;
 
 import java.util.ArrayList;
 
@@ -11,22 +10,19 @@ public class GameMap {
     private static Tile[][] tiles2D;
     static short mapWidth;
     static short mapLength;
-    ArrayList<GameUnit> units;
-    ArrayList<PlayerCharacter> characters;
+
 
     public enum MAP_TYPE {
         village, forest, roadside, city, fields
     }
 
     public GameMap(short w, short l) {
-        characters = new ArrayList<>();
+
         mapWidth = w;
         mapLength = l;
         tiles2D = new Tile[w][l];
         tiles = new ArrayList<>();
-        units = new ArrayList<>();
         generateMap();
-        addUnits();
         addTileObjects();
     }
 
@@ -39,15 +35,6 @@ public class GameMap {
                 }
             }
         }
-    }
-
-
-    public void addUnits() {
-        for (int i = 0; i < 5; i++) {
-            units.add(new GameUnit(TextureManager.UNITS.zombie.texture, tiles2D[12 + i][0]));
-        }
-        characters.add(new PlayerCharacter(TextureManager.UNITS.human.texture));
-        characters.get(0).setPos(tiles2D[mapWidth / 2][mapLength - 1]);
     }
 
     public void generateMap() {
@@ -71,8 +58,6 @@ public class GameMap {
         }
 
         addRoad("");
-        int i = 0;
-
     }
 
     private void addRoad(String direction) {

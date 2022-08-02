@@ -6,10 +6,10 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector3;
 import com.zombie.entities.GameUnit;
-import com.zombie.entities.PlayerCharacter;
+import com.zombie.entities.PlayerUnit;
 import com.zombie.map.GameMap;
 import com.zombie.map.MapManager;
-import com.zombie.map.Tile;
+import com.zombie.entities.Tile;
 
 public class InputManager implements InputProcessor {
     final OrthographicCamera camera;
@@ -22,9 +22,10 @@ public class InputManager implements InputProcessor {
     boolean rightButtonPressed;
     public static INPUT_STATE inputState = INPUT_STATE.map_mode;
     public static SELECT_STATE selectState = SELECT_STATE.pathNotSelected;
+    public GameController gameController;
 
     public enum INPUT_STATE {
-        menu, inventory, map_mode, map_animation;
+        paused, menu, inventory, map_mode, map_animation;
     }
 
     public enum SELECT_STATE {
@@ -32,6 +33,7 @@ public class InputManager implements InputProcessor {
     }
 
     public InputManager(OrthographicCamera camera) {
+        gameController = new GameController();
         this.camera = camera;
         input.setInputProcessor(this);
     }
@@ -42,7 +44,11 @@ public class InputManager implements InputProcessor {
 
         switch (inputState) {
             case map_mode:
-                mapMode();
+                mapMove();
+                selectTile();
+                break;
+            case map_animation:
+                mapMove();
                 break;
             case inventory:
             case menu:
@@ -50,7 +56,7 @@ public class InputManager implements InputProcessor {
         }
     }
 
-    private void mapMode() {
+    private void mapMove() {
         if (input.isKeyPressed(Input.Keys.LEFT)) {
             camera.translate(-keyAmount, 0, 0);
         }
@@ -67,11 +73,11 @@ public class InputManager implements InputProcessor {
             camera.translate(0, -keyAmount, 0);
         }
 
-        if (input.isKeyPressed(Input.Keys.SPACE)) {
-            //END TURN
+        if (input.isKeyPressed(Input.Keys.SPACE) && selectState != SELECT_STATE.pathSelected) {
+            if (gameController.currentTurn == GameController.TURN.PLAYER) {
+                gameController.endTurn();
+            }
         }
-
-        this.selectTile();
     }
 
     private void selectTile() {
@@ -90,12 +96,21 @@ public class InputManager implements InputProcessor {
         for (Tile tile : GameMap.getTiles()) {
             if (tileX >= 0 && tileY >= 0 && tileX < GameMap.getWidth() && tileY < GameMap.getLength()) {
                 if (tile.getX() == tileX && tile.getY() == tileY) {
-
                     if (leftButtonPressed && tile.hasUnit()) {
                         if (MapManager.SELECTED_TILE != tile) {
                             MapManager.SELECTED_TILE = tile;
                             MapManager.SELECTED_UNIT = tile.getUnitOnTile();
                         } else {
+                            resetPath();
+                        }
+                    }
+
+                    if (rightButtonPressed || leftButtonPressed) {
+                        if (tile == MapManager.END_TILE && selectState == SELECT_STATE.pathSelected && MapManager.path != null) {
+                            this.inputState = INPUT_STATE.map_animation;
+                            GameUnit unit = MapManager.SELECTED_TILE.getUnitOnTile();
+                            unit.setPath(MapManager.path);
+                            unit.move();
                             resetPath();
                         }
                     }
@@ -109,10 +124,13 @@ public class InputManager implements InputProcessor {
 
                     if (MapManager.SELECTED_TILE != tile && MapManager.SELECTED_TILE != null && !tile.hasUnit() && selectState == SELECT_STATE.pathNotSelected) {
                         GameUnit unit = MapManager.SELECTED_TILE.getUnitOnTile();
-                        if (unit.getClass() == PlayerCharacter.class) {
+                        if (unit.getClass() == PlayerUnit.class && unit.getAvailableTimeUnits() > 2) {
                             MapManager.END_TILE = tile;
                             MapManager.clearExplored();
                             MapManager.createPath();
+                            if (MapManager.path != null && MapManager.path.size() > 0) {
+                                MapManager.END_TILE = MapManager.path.get(MapManager.path.size() - 1);
+                            }
                         }
                     }
                 }
@@ -120,7 +138,7 @@ public class InputManager implements InputProcessor {
         }
     }
 
-    private void resetPath() {
+    private static void resetPath() {
         MapManager.SELECTED_TILE = null;
         MapManager.SELECTED_UNIT = null;
         MapManager.END_TILE = null;
@@ -134,7 +152,7 @@ public class InputManager implements InputProcessor {
     public void zoomCamera(float zoom) {
         float increments = 0.05f;
         float minZoom = 1f;
-        float maxZoom = 5.5f;
+        float maxZoom = 3f;
         float zoomAmount = zoom * increments;
         if ((camera.zoom + zoomAmount) < minZoom) {
             camera.zoom = minZoom;

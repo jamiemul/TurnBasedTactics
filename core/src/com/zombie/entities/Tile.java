@@ -1,32 +1,19 @@
-package com.zombie.map;
+package com.zombie.entities;
 
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.zombie.entities.GameUnit;
-import com.zombie.game.TextureManager;
+import com.zombie.gfx.TextureManager;
+import com.zombie.map.MapManager;
 
 import java.util.ArrayList;
 
-public class Tile {
+public class Tile extends WorldObject {
     public int hScore;
     public int gScore;
     public int fScore;
     public Tile parent;
     public final ArrayList<Tile> neighbours;
-    public final int x;
-    public final int y;
-
-    public final int screenX;
-    public final int screenY;
-    public final int h;
     public boolean explored = false;
     public boolean isVisible;
     public TextureManager.TEXTURE baseTile;
-
-    String textureFileName;
-
-    int height;
-    int width;
-
     private boolean walkable;
 
     public boolean hasUnit() {
@@ -45,17 +32,13 @@ public class Tile {
     ArrayList<TextureManager.TILE_OBJECTS> objectsOnTile;
 
     public Tile(int x, int y, int h) {
+        super(x, y, MapManager.TILE_WIDTH, MapManager.TILE_HEIGHT);
         this.objectsOnTile = new ArrayList<>();
         this.isVisible = false;
         this.neighbours = new ArrayList<>();
         this.walkable = true;
-        this.x = x;
-        this.y = y;
-        this.h = h;
-        this.width = MapManager.TILE_WIDTH;
-        this.height = MapManager.TILE_HEIGHT;
-        this.screenX = ((x - y) * (width / 2));
-        this.screenY = -((y + x) * (height / 2));
+        this.screenX = ((x - y) * (this.width / 2));
+        this.screenY = -((y + x) * (this.height / 2));
     }
 
     public void setVisible(boolean isVisible) {
@@ -72,9 +55,6 @@ public class Tile {
         }
     }
 
-    public void render(SpriteBatch batch, int screenX, int screenY) {
-        batch.draw(TextureManager.getAsset(textureFileName), screenX, screenY, this.width, this.height);
-    }
 
     public void setBaseTile(TextureManager.TEXTURE texture) {
         this.baseTile = texture;
@@ -83,28 +63,15 @@ public class Tile {
         this.textureFileName = texture.getName();
     }
 
-
-    private void setTextureData(TextureManager.TEXTURE texture) {
-
-    }
-
     public int getMovementCost() {
         return movementCost;
-    }
-
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
     }
 
     public boolean isWalkable() {
         return walkable;
     }
 
-    public Object getObjectsOnTile() {
+    public ArrayList<TextureManager.TILE_OBJECTS> getObjectsOnTile() {
         return objectsOnTile;
     }
 
@@ -137,4 +104,5 @@ public class Tile {
     public void setPathCost(int pathCost) {
         this.pathCost = pathCost;
     }
+
 }
