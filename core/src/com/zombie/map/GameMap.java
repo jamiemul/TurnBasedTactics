@@ -2,6 +2,7 @@ package com.zombie.map;
 
 import com.zombie.entities.Tile;
 import com.zombie.gfx.TextureManager;
+import com.zombie.gfx.Textures;
 
 import java.util.ArrayList;
 
@@ -11,6 +12,9 @@ public class GameMap {
     static short mapWidth;
     static short mapLength;
 
+    public enum DIRECTION {
+        north, west, south, east, northeast, southeast, northwest, southwest
+    }
 
     public enum MAP_TYPE {
         village, forest, roadside, city, fields
@@ -24,13 +28,14 @@ public class GameMap {
         tiles = new ArrayList<>();
         generateMap();
         addTileObjects();
+        addBuilding(5, 15, 10, 5);
     }
 
     private void addTileObjects() {
         for (int w = 0; w < mapWidth; w++) {
             for (int l = 0; l < mapLength; l++) {
-                TextureManager.TILE_OBJECTS object = TextureManager.getTileObject();
-                if (object.validTiles.contains(tiles2D[w][l].baseTile.getObject())) {
+                Textures.TILE_OBJECTS object = TextureManager.getTileObject();
+                if (object.validTiles.contains(tiles2D[w][l].texture.getObject())) {
                     tiles2D[w][l].addObjectOnTile(object);
                 }
             }
@@ -51,7 +56,7 @@ public class GameMap {
         for (int w = 0; w < mapWidth; w++) {
             for (int l = 0; l < mapLength; l++) {
                 {
-                    tiles2D[w][l].setBaseTile(TextureManager.TILES.grass.texture);
+                    tiles2D[w][l].setTexture(Textures.TILES.grass.texture);
                     addNeighbours(w, l);
                 }
             }
@@ -67,9 +72,9 @@ public class GameMap {
         for (int w = start; w < start + roadWidth; w++) {
             for (int l = 0; l < mapLength; l++) {
                 if (w == start + 2) {
-                    tiles2D[w][l].setBaseTile(TextureManager.TILES.roadLines.texture);
+                    tiles2D[w][l].setTexture(Textures.TILES.roadLines.texture);
                 } else {
-                    tiles2D[w][l].setBaseTile(TextureManager.TILES.road.texture);
+                    tiles2D[w][l].setTexture(Textures.TILES.road.texture);
                 }
             }
         }
@@ -77,30 +82,29 @@ public class GameMap {
 
     private void addNeighbours(int w, int l) {
         //Add neighbours for pathfinding.
-        if (w < mapWidth - 1) {
-            tiles2D[w][l].addNeighbour(tiles2D[w + 1][l]);
-            if (l < mapLength - 1) {
-                tiles2D[w][l].addNeighbour(tiles2D[w + 1][l + 1]);
-            }
-            if (l > 0) {
-                tiles2D[w][l].addNeighbour(tiles2D[w + 1][l - 1]);
-            }
-        }
+        if (w < mapWidth - 1)
+            tiles2D[w][l].addNeighbour(DIRECTION.southeast, tiles2D[w + 1][l]);
+        if (w < mapWidth - 1 && l < mapLength - 1)
+            tiles2D[w][l].addNeighbour(DIRECTION.south, tiles2D[w + 1][l + 1]);
+        if (l < mapLength - 1)
+            tiles2D[w][l].addNeighbour(DIRECTION.southwest, tiles2D[w][l + 1]);
+        if (l > 0)
+            tiles2D[w][l].addNeighbour(DIRECTION.northeast, tiles2D[w][l - 1]);
+        if (l > 0 && w > 0)
+            tiles2D[w][l].addNeighbour(DIRECTION.north, tiles2D[w - 1][l - 1]);
+        if (w > 0)
+            tiles2D[w][l].addNeighbour(DIRECTION.northwest, tiles2D[w - 1][l]);
+        if (l > 0 && w < mapWidth - 1)
+            tiles2D[w][l].addNeighbour(DIRECTION.east, tiles2D[w + 1][l - 1]);
+        if (w > 0 && l < mapLength - 1)
+            tiles2D[w][l].addNeighbour(DIRECTION.west, tiles2D[w - 1][l + 1]);
+    }
 
-        if (w > 0) {
-            tiles2D[w][l].addNeighbour(tiles2D[w - 1][l]);
-            if (l < mapLength - 1) {
-                tiles2D[w][l].addNeighbour(tiles2D[w - 1][l + 1]);
-            }
-            if (l > 0) {
-                tiles2D[w][l].addNeighbour(tiles2D[w - 1][l - 1]);
-            }
-        }
-        if (l > 0) {
-            tiles2D[w][l].addNeighbour(tiles2D[w][l - 1]);
-        }
-        if (l < mapLength - 1) {
-            tiles2D[w][l].addNeighbour(tiles2D[w][l + 1]);
+    private void addBuilding(int startX, int startY, int width, int height) {
+        //northWall;
+        for (int x = startX; x < startX + width; x++) {
+            tiles2D[x][startY].addLeftWall();
+            tiles2D[x][startY].getLeftWall().setTexture(Textures.TILES.leftWall.texture);
         }
     }
 

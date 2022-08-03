@@ -2,11 +2,9 @@ package com.zombie.map;
 
 import com.zombie.entities.AIUnit;
 import com.zombie.entities.PlayerUnit;
-import com.zombie.game.GameController;
-import com.zombie.gfx.TextureManager;
-import com.zombie.map.GameMap;
 import com.zombie.entities.Tile;
-import com.zombie.map.PathFinder;
+import com.zombie.game.GameController;
+import com.zombie.gfx.Textures;
 
 import java.util.ArrayList;
 
@@ -25,11 +23,11 @@ public class UnitManager {
     }
 
     public void addUnits() {
-        for (int i = 0; i < 5; i++) {
-            enemyUnits.add(new AIUnit(TextureManager.UNITS.zombie.texture, tiles2D[12 + i][0]));
-        }
+//        for (int i = 0; i < 5; i++) {
+//            enemyUnits.add(new AIUnit(Textures.UNITS.zombie.texture, tiles2D[2 + i][0]));
+//        }
 
-        playerUnits.add(new PlayerUnit(TextureManager.UNITS.human.texture));
+        playerUnits.add(new PlayerUnit(Textures.UNITS.human.texture));
         playerUnits.get(0).updateTileAndSetPosition(tiles2D[GameMap.getWidth() / 2][GameMap.getLength() - 1]);
     }
 

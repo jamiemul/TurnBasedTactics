@@ -1,12 +1,15 @@
 package com.zombie.map;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.zombie.entities.GameUnit;
 import com.zombie.entities.Tile;
+import com.zombie.entities.Wall;
 import com.zombie.gfx.TextureManager;
+import com.zombie.gfx.Textures;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,11 +24,12 @@ public class MapManager {
     public static Tile END_TILE;
     public static GameUnit SELECTED_UNIT;
     public static GameMap gameMap;
-    final static short MAP_LENGTH = 40;
-    final static short MAP_WIDTH = 30;
+    final static short MAP_LENGTH = 20;
+    final static short MAP_WIDTH = 20;
 
     Texture selectedTileTexture;
     Texture highlightedTileTexture;
+    Texture exploredTileTexture;
     static PathFinder pathFinder;
     public static ArrayList<Tile> path;
     Tile[][] tiles;
@@ -49,14 +53,15 @@ public class MapManager {
     public void loadTextures() {
         // LOAD ALL TEXTURES
         ArrayList<String> textures = new ArrayList<>();
-        textures.addAll(Arrays.stream(TextureManager.UI_TILES.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
-        textures.addAll(Arrays.stream(TextureManager.TILE_OBJECTS.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
-        textures.addAll(Arrays.stream(TextureManager.UNITS.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
-        textures.addAll(Arrays.stream(TextureManager.TILES.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
+        textures.addAll(Arrays.stream(Textures.UI_TILES.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
+        textures.addAll(Arrays.stream(Textures.TILE_OBJECTS.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
+        textures.addAll(Arrays.stream(Textures.UNITS.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
+        textures.addAll(Arrays.stream(Textures.TILES.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
         TextureManager.addAssets(textures);
         // ASSIGN UI TEXTURES
-        this.highlightedTileTexture = TextureManager.getAsset(TextureManager.UI_TILES.highlightTile.texture.getName());
-        this.selectedTileTexture = TextureManager.getAsset(TextureManager.UI_TILES.selectedTile.texture.getName());
+        this.highlightedTileTexture = TextureManager.getAsset(Textures.UI_TILES.highlightTile.texture.getName());
+        this.selectedTileTexture = TextureManager.getAsset(Textures.UI_TILES.selectedTile.texture.getName());
+        this.exploredTileTexture = TextureManager.getAsset(Textures.UI_TILES.exploredTile.texture.getName());
     }
 
     public void setCameraStart() {
@@ -70,24 +75,14 @@ public class MapManager {
 
     public static void clearExplored() {
         for (Tile t : gameMap.getTiles()) {
-            t.explored = false;
+            t.resetHeuristic();
         }
     }
 
     public void update(SpriteBatch batch) {
         unitManager.update();
 
-        for (int y = 0; y < MAP_LENGTH; y++) {
-            for (int x = 0; x < MAP_WIDTH; x++) {
-                Tile tile = tiles[x][y];
-
-                tile.render(batch, tile.getScreenX(), tile.getScreenY() - TILE_HEIGHT);
-
-                if (path != null && path.contains(tile)) {
-                    batch.draw(this.highlightedTileTexture, tile.getScreenX(), tile.getScreenY(), TILE_WIDTH, TILE_HEIGHT);
-                }
-            }
-        }
+        renderTiles(batch);
 
         if (HIGHLIGHTED_TILE != null) {
             renderHighlightTile(batch, this.highlightedTileTexture, HIGHLIGHTED_TILE.getScreenX(), HIGHLIGHTED_TILE.getScreenY());
@@ -97,27 +92,59 @@ public class MapManager {
             renderHighlightTile(batch, this.selectedTileTexture, SELECTED_TILE.getScreenX(), SELECTED_TILE.getScreenY());
         }
 
-        for (int y = 0; y < MAP_LENGTH; y++) {
-            for (int x = 0; x < MAP_WIDTH; x++) {
-                Tile tile = tiles[x][y];
-
-                for (TextureManager.TILE_OBJECTS object : tile.getObjectsOnTile()) {
-                    if (object.texture != null) {
-                        object.render(batch, tile.getScreenX(), tile.getScreenY());
-                    }
-                }
-
-                if (tile.hasUnit()) {
-                    GameUnit unit = tile.getUnitOnTile();
-                    unit.render(batch);
-                }
-            }
-        }
+        renderTileObjects(batch);
 
         if (END_TILE != null && path != null && path.size() > 0) {
             if (path.get(0).getPathCost() != null)
                 font.draw(batch, path.get(0).getPathCost().toString(), END_TILE.getScreenX() + 24, END_TILE.getScreenY() + 24);
             renderHighlightTile(batch, this.selectedTileTexture, END_TILE.getScreenX(), END_TILE.getScreenY());
+        }
+    }
+
+    private void renderTiles(SpriteBatch batch) {
+        for (int y = 0; y < MAP_LENGTH; y++) {
+            for (int x = 0; x < MAP_WIDTH; x++) {
+                Tile tile = tiles[x][y];
+
+                tile.render(batch, tile.getScreenX(), tile.getScreenY() - TILE_HEIGHT);
+
+                if (path != null && path.contains(tile)) {
+                    batch.draw(this.highlightedTileTexture, tile.getScreenX(), tile.getScreenY(), TILE_WIDTH, TILE_HEIGHT);
+                }
+
+//                if (tile.explored) {
+//                    renderHighlightTile(batch, this.exploredTileTexture, tile.getScreenX(), tile.getScreenY());
+//                }
+            }
+        }
+    }
+
+    private void renderTileObjects(SpriteBatch batch) {
+        for (int y = 0; y < MAP_LENGTH; y++) {
+            for (int x = 0; x < MAP_WIDTH; x++) {
+                Tile tile = tiles[x][y];
+
+                for (Textures.TILE_OBJECTS object : tile.getObjectsOnTile()) {
+                    if (object.texture != null) {
+                        object.render(batch, tile.getScreenX(), tile.getScreenY());
+                    }
+                }
+
+
+                if (tile.hasUnit()) {
+                    GameUnit unit = tile.getUnitOnTile();
+                    unit.render(batch);
+                }
+                Wall lwall = tile.getLeftWall();
+                Wall rwall = tile.getLeftWall();
+
+                if (lwall != null) {
+                    lwall.render(batch);
+                }
+                if (rwall != null) {
+                    rwall.render(batch);
+                }
+            }
         }
     }
 

@@ -1,12 +1,13 @@
 package com.zombie.gfx;
 
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-public  class Texture <E extends Enum<E>>{
-    private final String textureName;
+public class Texture<E extends Enum<E>> {
+    final String textureName;
     int width;
     int height;
     Object obj;
@@ -29,7 +30,7 @@ public  class Texture <E extends Enum<E>>{
             width = img.getWidth();
             height = img.getHeight();
         } catch (IOException e) {
-
+            System.out.println(e);
         }
     }
 
@@ -48,4 +49,5 @@ public  class Texture <E extends Enum<E>>{
     public int getWidth() {
         return width;
     }
+
 }

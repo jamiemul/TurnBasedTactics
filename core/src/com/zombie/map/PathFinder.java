@@ -25,14 +25,19 @@ public class PathFinder {
         Tile currentTile = null;
         end.parent = null;
 
+        if (!end.isWalkable()) {
+            return null;
+        }
+
         while (openList.size() > 0) {
             currentTile = lowestFScore(openList);
-            ArrayList<Tile> neighbours = currentTile.getNeighbors(currentTile);
+            ArrayList<Tile> neighbours = currentTile.getNeighbors();
             for (Tile neighbour : neighbours) {
-                if (!explored.contains(neighbour) && neighbour.isWalkable() && !neighbour.hasUnit()) {
+                if (!currentTile.isPathBlocked(neighbour) && !explored.contains(neighbour) && neighbour.isWalkable() && !neighbour.hasUnit()) {
                     int gScore = currentTile.gScore + getDistance(neighbour, currentTile) + neighbour.getMovementCost();
                     if (!openList.contains(neighbour)) {
                         openList.add(neighbour);
+                        neighbour.explored = true;
                         neighbour.hScore = getDistance(neighbour, end);
                         neighbour.gScore = gScore;
                         neighbour.parent = currentTile;
@@ -48,7 +53,6 @@ public class PathFinder {
 
             if (!explored.contains(currentTile)) {
                 explored.add(currentTile);
-                currentTile.explored = true;
             }
 
             if (currentTile == end) {

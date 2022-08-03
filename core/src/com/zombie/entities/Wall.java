@@ -7,12 +7,14 @@ public class Wall extends WorldObject {
     Tile connectingTile;
     int hitPoints;
     public boolean leftWall;
+    boolean climbable;
 
     public Wall(Tile tile, Tile connectingTile, boolean leftWall) {
         super(tile.x, tile.y, MapManager.TILE_WIDTH, MapManager.TILE_HEIGHT, tile.getScreenX(), tile.getScreenY());
         this.leftWall = leftWall;
         this.tile = tile;
         this.connectingTile = connectingTile;
+        this.climbable = false;
     }
 
     public Tile getTile() {
