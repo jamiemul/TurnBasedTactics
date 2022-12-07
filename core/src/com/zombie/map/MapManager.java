@@ -1,6 +1,5 @@
 package com.zombie.map;
 
-import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -24,8 +23,8 @@ public class MapManager {
     public static Tile END_TILE;
     public static GameUnit SELECTED_UNIT;
     public static GameMap gameMap;
-    final static short MAP_LENGTH = 20;
-    final static short MAP_WIDTH = 20;
+    final static short MAP_LENGTH = 40;
+    final static short MAP_WIDTH = 40;
 
     Texture selectedTileTexture;
     Texture highlightedTileTexture;
@@ -39,15 +38,25 @@ public class MapManager {
 
     public MapManager(OrthographicCamera camera) {
         font = new BitmapFont();
+        this.loadTextures();
+        addUiTextures();
         gameMap = new GameMap(MAP_WIDTH, MAP_LENGTH);
         this.camera = camera;
-        this.loadTextures();
+
         this.setCameraStart();
         this.tiles = gameMap.getTiles2D();
         pathFinder = new PathFinder(gameMap.getTiles());
         path = new ArrayList<>();
         unitManager = new UnitManager(this.tiles, pathFinder);
         unitManager.addUnits();
+
+    }
+
+    private void addUiTextures() {
+        // ASSIGN UI TEXTURES
+        this.highlightedTileTexture = TextureManager.getAsset(Textures.UI_TILES.highlightTile.texture.getName());
+        this.selectedTileTexture = TextureManager.getAsset(Textures.UI_TILES.selectedTile.texture.getName());
+        this.exploredTileTexture = TextureManager.getAsset(Textures.UI_TILES.exploredTile.texture.getName());
     }
 
     public void loadTextures() {
@@ -58,10 +67,6 @@ public class MapManager {
         textures.addAll(Arrays.stream(Textures.UNITS.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
         textures.addAll(Arrays.stream(Textures.TILES.values()).map(t -> t.texture.getName()).collect(Collectors.toList()));
         TextureManager.addAssets(textures);
-        // ASSIGN UI TEXTURES
-        this.highlightedTileTexture = TextureManager.getAsset(Textures.UI_TILES.highlightTile.texture.getName());
-        this.selectedTileTexture = TextureManager.getAsset(Textures.UI_TILES.selectedTile.texture.getName());
-        this.exploredTileTexture = TextureManager.getAsset(Textures.UI_TILES.exploredTile.texture.getName());
     }
 
     public void setCameraStart() {
@@ -111,10 +116,6 @@ public class MapManager {
                 if (path != null && path.contains(tile)) {
                     batch.draw(this.highlightedTileTexture, tile.getScreenX(), tile.getScreenY(), TILE_WIDTH, TILE_HEIGHT);
                 }
-
-//                if (tile.explored) {
-//                    renderHighlightTile(batch, this.exploredTileTexture, tile.getScreenX(), tile.getScreenY());
-//                }
             }
         }
     }
@@ -130,19 +131,18 @@ public class MapManager {
                     }
                 }
 
-
                 if (tile.hasUnit()) {
                     GameUnit unit = tile.getUnitOnTile();
                     unit.render(batch);
                 }
-                Wall lwall = tile.getLeftWall();
-                Wall rwall = tile.getLeftWall();
+                Wall leftWall = tile.getLeftWall();
+                Wall rightWall = tile.getRightWall();
 
-                if (lwall != null) {
-                    lwall.render(batch);
+                if (leftWall != null) {
+                    leftWall.render(batch);
                 }
-                if (rwall != null) {
-                    rwall.render(batch);
+                if (rightWall != null) {
+                    rightWall.render(batch);
                 }
             }
         }

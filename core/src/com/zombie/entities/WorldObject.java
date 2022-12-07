@@ -1,5 +1,6 @@
 package com.zombie.entities;
 
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.zombie.gfx.TextureManager;
 
@@ -29,13 +30,6 @@ public class WorldObject {
         this.width = tileWidth;
     }
 
-    public WorldObject(int x, int y, int tileWidth, int tileHeight, TextureManager.TEXTURE texture) {
-        this.x = x;
-        this.y = y;
-        setTexture(texture);
-    }
-
-
     public int getX() {
         return x;
     }
@@ -64,6 +58,8 @@ public class WorldObject {
     }
 
     public void render(SpriteBatch batch) {
-        batch.draw(TextureManager.getAsset(textureFileName), this.screenX, this.screenY, this.width, this.height);
+        Texture t = TextureManager.getAsset(textureFileName);
+        batch.draw(t, this.screenX, this.screenY, this.width, this.height);
+
     }
 }

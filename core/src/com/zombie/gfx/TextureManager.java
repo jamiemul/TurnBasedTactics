@@ -3,6 +3,8 @@ package com.zombie.gfx;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 import javax.imageio.ImageIO;
@@ -60,22 +62,16 @@ public class TextureManager extends AssetManager {
 
     }
 
-    public final static Map<String, Texture> textureMapsList = new HashMap<>();
-    public final static Map<String, SpriteSheet> spriteSheetMapList = new HashMap<>();
+    public static Map<String, Texture> textureMapsList = new HashMap<>();
+    public static Map<String, SpriteSheet> spriteSheetMapList = new HashMap<>();
+    public static Animation<TextureRegion> textureRegionAnimation;
+    public static Map<String, TextureAtlas> textureAtlases = new HashMap<>();
 
     public static void addAssets(ArrayList<String> values) {
+        //TextureManager.addAtlas("sprites/green_man_data.atlas");
         for (String asset : values) {
             textureMapsList.put(asset, new Texture(Gdx.files.internal(asset)));
         }
-    }
-
-    public static void createSpriteSheet(String asset, int cols, int rows, int width, int height) {
-        TextureRegion t = new TextureRegion(getAsset(asset), width, height);
-        spriteSheetMapList.put(asset, new SpriteSheet(t, height, width, cols, rows));
-    }
-
-    public static Texture getAsset(String name) {
-        return textureMapsList.get(name);
     }
 
     public static Textures.TILE_OBJECTS getTileObject() {
@@ -87,5 +83,18 @@ public class TextureManager extends AssetManager {
         Random rand = new Random();
 
         return tiles.get(rand.nextInt(tiles.size()));
+    }
+
+    public static void addAtlas(String atlas) {
+        TextureAtlas textureAtlas = new TextureAtlas(Gdx.files.internal(atlas));
+        textureAtlases.put(atlas, textureAtlas);
+    }
+
+    public static Texture getAsset(String name) {
+        return textureMapsList.get(name);
+    }
+
+    public static Texture getAtlasAsset(String name, String region) {
+        return textureMapsList.get(name);
     }
 }

@@ -4,13 +4,16 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.zombie.game.InputManager;
 import com.zombie.gfx.TextureManager;
+import com.zombie.map.GameMap;
 import com.zombie.map.MapManager;
+import com.zombie.utils.Traits;
 import com.zombie.utils.UnitAttributes;
 
 import java.util.ArrayList;
 
 public class GameUnit {
     public int sightDistance;
+    public GameMap.DIRECTION directionFacing;
     private UnitAttributes unitAttributes;
     private Tile currentTile;
     private String name;
@@ -18,11 +21,12 @@ public class GameUnit {
     private int pathWalked;
     private boolean unitMoving;
     private ArrayList<Tile> path;
+    private ArrayList<Traits> traits;
     private String textureFileName;
     private int availableTimeUnits;
     private int textureWidth;
     private int textureHeight;
-    private Vector2 direction;
+    private Vector2 moveDirection;
     private int heightOffset;
     boolean visible = false;
     private float screenX;
@@ -74,16 +78,24 @@ public class GameUnit {
         this.textureFileName = texture.getName();
     }
 
+    public void setSpriteSheet(TextureManager.TEXTURE texture) {
+        this.textureWidth = texture.getWidth();
+        this.textureHeight = texture.getHeight();
+        this.heightOffset = MapManager.TILE_HEIGHT / 2;
+        this.textureFileName = texture.getName();
+    }
+
     public void update() {
         if (unitMoving) {
+            float movementMultiplier = 1.5f;
             float x = goalTile.getScreenX() - this.screenX;
             float y = goalTile.getScreenY() - this.screenY;
-            direction = new Vector2(x, y).nor();
+            moveDirection = new Vector2(x, y).nor();
             Vector2 v1 = new Vector2(this.screenX, this.screenY);
             Vector2 v2 = new Vector2(goalTile.getScreenX(), goalTile.getScreenY());
             double distance = v1.dst(v2);
-            this.screenX += direction.x;
-            this.screenY += direction.y;
+            this.screenX += moveDirection.x * movementMultiplier;
+            this.screenY += moveDirection.y * movementMultiplier;
 
             if (distance < MapManager.TILE_WIDTH / 2) {
                 this.updateTile(goalTile);

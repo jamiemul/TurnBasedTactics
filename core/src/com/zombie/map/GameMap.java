@@ -28,7 +28,7 @@ public class GameMap {
         tiles = new ArrayList<>();
         generateMap();
         addTileObjects();
-        addBuilding(5, 15, 10, 5);
+        addBuilding(10, 24, 6, 10);
     }
 
     private void addTileObjects() {
@@ -101,10 +101,30 @@ public class GameMap {
     }
 
     private void addBuilding(int startX, int startY, int width, int height) {
-        //northWall;
-        for (int x = startX; x < startX + width; x++) {
+        for (int x = startX + 1; x <= startX + width; x++) {
             tiles2D[x][startY].addLeftWall();
             tiles2D[x][startY].getLeftWall().setTexture(Textures.TILES.leftWall.texture);
+
+            tiles2D[x][startY + height].addLeftWall();
+            tiles2D[x][startY + height].getLeftWall().setTexture(Textures.TILES.leftWall.texture);
+
+
+        }
+
+        for (int y = startY + 1; y <= startY + height; y++) {
+            tiles2D[startX][y].addRightWall();
+            tiles2D[startX][y].getRightWall().setTexture(Textures.TILES.rightWall.texture);
+            if (y != Math.round(startY + (height / 2))) {
+                tiles2D[startX + width][y].addRightWall();
+                tiles2D[startX + width][y].getRightWall().setTexture(Textures.TILES.rightWall.texture);
+            }
+        }
+
+        for (int y = startY + 1; y <= startY + height; y++) {
+            for (int x = startX + 1; x <= startX + width; x++) {
+                tiles2D[x][y].removeObjects();
+                tiles2D[x][y].setTexture(Textures.TILES.floor.texture);
+            }
         }
     }
 

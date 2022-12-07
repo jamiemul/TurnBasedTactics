@@ -4,17 +4,15 @@ import com.zombie.map.MapManager;
 
 public class Wall extends WorldObject {
     Tile tile;
-    Tile connectingTile;
     int hitPoints;
-    public boolean leftWall;
     boolean climbable;
+    boolean door;
 
-    public Wall(Tile tile, Tile connectingTile, boolean leftWall) {
-        super(tile.x, tile.y, MapManager.TILE_WIDTH, MapManager.TILE_HEIGHT, tile.getScreenX(), tile.getScreenY());
-        this.leftWall = leftWall;
+    public Wall(Tile tile) {
+        super(tile.x, tile.y, MapManager.TILE_WIDTH, 128, tile.getScreenX(), tile.getScreenY());
         this.tile = tile;
-        this.connectingTile = connectingTile;
         this.climbable = false;
+        this.door = false;
     }
 
     public Tile getTile() {
@@ -25,27 +23,11 @@ public class Wall extends WorldObject {
         this.tile = tile;
     }
 
-    public Tile getConnectingTile() {
-        return connectingTile;
-    }
-
-    public void setConnectingTile(Tile connectingTile) {
-        this.connectingTile = connectingTile;
-    }
-
     public int getHitPoints() {
         return hitPoints;
     }
 
     public void setHitPoints(int hitPoints) {
         this.hitPoints = hitPoints;
-    }
-
-    public boolean isLeftWall() {
-        return leftWall;
-    }
-
-    public void setLeftWall(boolean leftWall) {
-        this.leftWall = leftWall;
     }
 }

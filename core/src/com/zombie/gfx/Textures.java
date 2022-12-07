@@ -49,7 +49,9 @@ public class Textures {
     }
 
     public enum TILES {
-        leftWall("tiles/left-wall.png", true, 0),
+        leftWall("tiles/wall-left.png", true, 0),
+        rightWall("tiles/wall-right.png", true, 0),
+        floor("tiles/tile_floor.png", true, 0),
         grass("tiles/tile_grass.png", true, 0),
         road("tiles/tile_road.png", true, 0),
         roadLines("tiles/tile_road_lines_l.png", true, 0);
@@ -66,7 +68,8 @@ public class Textures {
     }
 
     public enum UNITS {
-        zombie("sprites/zombie.png"), human("sprites/deckard.png");
+        zombie("sprites/zombie.png"),
+        human("sprites/directional_sprite.png");
         public final TextureManager.TEXTURE<UNITS> texture;
 
         UNITS(String textureName) {

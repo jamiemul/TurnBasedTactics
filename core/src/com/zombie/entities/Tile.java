@@ -60,7 +60,6 @@ public class Tile extends WorldObject {
         }
     }
 
-
     public int getMovementCost() {
         return movementCost;
     }
@@ -81,6 +80,12 @@ public class Tile extends WorldObject {
         }
     }
 
+    public void removeObjects() {
+        this.walkable = true;
+        this.movementCost = 0;
+        this.objectsOnTile.clear();
+    }
+
     public void addUnit(GameUnit unit) {
         this.unitOnTile = unit;
         this.hasUnit = true;
@@ -92,11 +97,33 @@ public class Tile extends WorldObject {
     }
 
     public void addLeftWall() {
-        leftWall = new Wall(this, this.neighbours.get(GameMap.DIRECTION.southwest), true);
+        leftWall = new Wall(this);
     }
 
     public void addRightWall() {
-        rightWall = new Wall(this, this.neighbours.get(GameMap.DIRECTION.southeast), true);
+        rightWall = new Wall(this);
+    }
+
+    public Wall getLeftWall() {
+        return leftWall;
+    }
+
+    public Wall getRightWall() {
+        return rightWall;
+    }
+
+    public boolean hasLeftWall() {
+        if (leftWall != null) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean hasRightWall() {
+        if (rightWall != null) {
+            return true;
+        }
+        return false;
     }
 
     public ArrayList<Tile> getNeighbors() {
@@ -119,37 +146,57 @@ public class Tile extends WorldObject {
         return pathCost;
     }
 
-    public boolean isPathBlocked(Tile tile) {
-        if (leftWall != null) {
-            if (GameMap.DIRECTION.southwest == getNeighborDirection(tile) ||
-                    GameMap.DIRECTION.south == getNeighborDirection(tile) ||
-                    GameMap.DIRECTION.west == getNeighborDirection(tile)) {
-                return true;
-            }
-        }
-
-        if (rightWall != null) {
-            if (GameMap.DIRECTION.southeast == getNeighborDirection(tile) ||
-                    GameMap.DIRECTION.south == getNeighborDirection(tile) ||
-                    GameMap.DIRECTION.east == getNeighborDirection(tile)) {
-                return true;
-            }
-        }
-
-        if (tile.leftWall != null) {
-            if (GameMap.DIRECTION.northeast == getNeighborDirection(tile) ||
-                    GameMap.DIRECTION.north == getNeighborDirection(tile) ||
-                    GameMap.DIRECTION.east == getNeighborDirection(tile)) {
-                return true;
-            }
-        }
-
-        if (tile.rightWall != null) {
-            if (GameMap.DIRECTION.northwest == getNeighborDirection(tile) ||
-                    GameMap.DIRECTION.north == getNeighborDirection(tile) ||
-                    GameMap.DIRECTION.west == getNeighborDirection(tile)) {
-                return true;
-            }
+    public boolean isPathBlocked(Tile goalTile) {
+        GameMap.DIRECTION movingDirection = getNeighborDirection(goalTile);
+        switch (movingDirection) {
+            case south:
+                if (this.hasLeftWall() || this.hasRightWall()
+                        || neighbours.get(GameMap.DIRECTION.southwest).hasRightWall()
+                        || neighbours.get(GameMap.DIRECTION.southeast).hasLeftWall()) {
+                    return true;
+                }
+                break;
+            case north:
+                if (goalTile.hasRightWall() || goalTile.hasLeftWall()
+                        || neighbours.get(GameMap.DIRECTION.northwest).hasRightWall()
+                        || neighbours.get(GameMap.DIRECTION.northeast).hasLeftWall()) {
+                    return true;
+                }
+                break;
+            case east:
+                if (goalTile.hasLeftWall() || this.hasRightWall()
+                        || neighbours.get(GameMap.DIRECTION.northeast).hasRightWall()
+                        || neighbours.get(GameMap.DIRECTION.northeast).hasLeftWall()) {
+                    return true;
+                }
+                break;
+            case west:
+                if (goalTile.hasRightWall() || this.hasLeftWall()
+                        || neighbours.get(GameMap.DIRECTION.northwest).hasRightWall()
+                        || neighbours.get(GameMap.DIRECTION.west).hasRightWall()) {
+                    return true;
+                }
+                break;
+            case southeast:
+                if (this.hasRightWall()) {
+                    return true;
+                }
+                break;
+            case southwest:
+                if (this.hasLeftWall()) {
+                    return true;
+                }
+                break;
+            case northeast:
+                if (goalTile.hasLeftWall()) {
+                    return true;
+                }
+                break;
+            case northwest:
+                if (goalTile.hasRightWall()) {
+                    return true;
+                }
+                break;
         }
 
         return false;
@@ -164,22 +211,5 @@ public class Tile extends WorldObject {
         hScore = 0;
         fScore = 0;
         gScore = 0;
-    }
-
-
-    public Wall getLeftWall() {
-        return leftWall;
-    }
-
-    public void setLeftWall(Wall leftWall) {
-        this.leftWall = leftWall;
-    }
-
-    public Wall getRightWall() {
-        return rightWall;
-    }
-
-    public void setRightWall(Wall rightWall) {
-        this.rightWall = rightWall;
     }
 }

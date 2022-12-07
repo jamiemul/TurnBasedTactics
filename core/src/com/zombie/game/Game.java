@@ -30,6 +30,7 @@ public class Game extends ApplicationAdapter {
         ScreenUtils.clear(0, 0, 0, 1);
         if (CAMERA_ACTIVE) camera.update();
         batch.setProjectionMatrix(camera.combined);
+        batch.enableBlending();
         batch.begin();
         input.update();
         renderer.update(batch);
